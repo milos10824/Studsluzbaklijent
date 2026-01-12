@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17.0.2" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="org.raflab.studsluzba.ui.StudentProfileTabsController" spacing="10">
+
+    <padding>
+        <Insets top="12" right="12" bottom="12" left="12"/>
+    </padding>
+
+    <!-- Header -->
+    <VBox spacing="4">
+        <Label fx:id="lblHeader" style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Profil"/>
+        <HBox spacing="16">
+            <Label text="Indeks:"/>
+            <Label fx:id="lblIndeks" text=""/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Program:"/>
+            <Label fx:id="lblProgram" text=""/>
+        </HBox>
+        <HBox spacing="16">
+            <Label text="ESPB:"/>
+            <Label fx:id="lblEspb" text=""/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Prosek:"/>
+            <Label fx:id="lblProsek" text=""/>
+        </HBox>
+    </VBox>
+
+    <Separator/>
+
+    <TabPane VBox.vgrow="ALWAYS">
+        <tabs>
+            <!-- Lični podaci -->
+            <Tab fx:id="tabLicni" text="Lični podaci" closable="false">
+                <BorderPane>
+                    <center>
+                        <VBox fx:id="boxLicni" spacing="6">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+
+                            <GridPane hgap="10" vgap="6">
+                                <Label text="Ime:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                <Label fx:id="lblIme" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                                <Label text="Prezime:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                <Label fx:id="lblPrezime" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                                <Label text="Email:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                <Label fx:id="lblEmail" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                                <Label text="JMBG:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                                <Label fx:id="lblJmbg" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                                <Label text="Datum rođenja:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                                <Label fx:id="lblDatumRodjenja" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                                <Label text="Adresa:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                                <Label fx:id="lblAdresa" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+                                <Label text="Telefon:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                                <Label fx:id="lblTelefon" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+                            </GridPane>
+                        </VBox>
+                    </center>
+
+                    <top>
+                        <HBox alignment="CENTER" spacing="10">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <ProgressIndicator fx:id="piLicni" visible="false"/>
+                        </HBox>
+                    </top>
+                </BorderPane>
+            </Tab>
+
+            <!-- Nepoloženi -->
+            <Tab fx:id="tabNepolozeni" text="Nepoloženi" closable="false">
+                <BorderPane>
+                    <top>
+                        <HBox alignment="CENTER" spacing="10">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <ProgressIndicator fx:id="piNepolozeni" visible="false"/>
+                        </HBox>
+                    </top>
+
+                    <center>
+                        <TableView fx:id="tblNepolozeni" prefHeight="400">
+                            <columns>
+                                <TableColumn fx:id="colNepPredmet" text="Predmet" prefWidth="260"/>
+                                <TableColumn fx:id="colNepEspb" text="ESPB" prefWidth="60"/>
+                                <TableColumn fx:id="colNepNastavnik" text="Nastavnik" prefWidth="180"/>
+                                <TableColumn fx:id="colNepSkGod" text="Šk. godina" prefWidth="120"/>
+                            </columns>
+                        </TableView>
+                    </center>
+                </BorderPane>
+            </Tab>
+
+            <!-- Položeni -->
+            <Tab fx:id="tabPolozeni" text="Položeni" closable="false">
+                <BorderPane>
+                    <top>
+                        <VBox spacing="6">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+
+                            <HBox alignment="CENTER" spacing="10">
+                                <ProgressIndicator fx:id="piPolozeni" visible="false"/>
+                            </HBox>
+
+                            <HBox spacing="8" alignment="CENTER_RIGHT">
+                                <Button fx:id="btnPrevPol" text="◀"/>
+                                <Label fx:id="lblPolPage" text="1 / 1"/>
+                                <Button fx:id="btnNextPol" text="▶"/>
+                            </HBox>
+                        </VBox>
+                    </top>
+
+                    <center>
+                        <TableView fx:id="tblPolozeni" prefHeight="400">
+                            <columns>
+                                <TableColumn fx:id="colPolPredmet" text="Predmet" prefWidth="260"/>
+                                <TableColumn fx:id="colPolOcena" text="Ocena" prefWidth="60"/>
+                                <TableColumn fx:id="colPolEspb" text="ESPB" prefWidth="60"/>
+                                <TableColumn fx:id="colPolDatum" text="Datum" prefWidth="120"/>
+                                <TableColumn fx:id="colPolPriznat" text="Priznat" prefWidth="80"/>
+                            </columns>
+                        </TableView>
+                    </center>
+                </BorderPane>
+            </Tab>
+
+            <!-- Uplate -->
+            <Tab fx:id="tabUplate" text="Uplate" closable="false">
+                <BorderPane>
+                    <top>
+                        <HBox alignment="CENTER" spacing="10">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <ProgressIndicator fx:id="piUplate" visible="false"/>
+                        </HBox>
+                    </top>
+
+                    <center>
+                        <TableView fx:id="tblUplate" prefHeight="400">
+                            <columns>
+                                <TableColumn fx:id="colUplDatum" text="Datum" prefWidth="120"/>
+                                <TableColumn fx:id="colUplIznos" text="Iznos (RSD)" prefWidth="140"/>
+                                <TableColumn fx:id="colUplKurs" text="Srednji kurs" prefWidth="120"/>
+                            </columns>
+                        </TableView>
+                    </center>
+                </BorderPane>
+            </Tab>
+
+            <!-- Tok studija -->
+            <Tab fx:id="tabTok" text="Tok studija" closable="false">
+                <BorderPane>
+                    <top>
+                        <HBox alignment="CENTER" spacing="10">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <ProgressIndicator fx:id="piTok" visible="false"/>
+                        </HBox>
+                    </top>
+
+                    <center>
+                        <VBox spacing="10">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+
+                            <Label text="Upisane godine" style="-fx-font-weight: bold;"/>
+                            <TableView fx:id="tblUpisi" prefHeight="180">
+                                <columns>
+                                    <TableColumn fx:id="colUpSkGod" text="Šk. godina" prefWidth="120"/>
+                                    <TableColumn fx:id="colUpGodStud" text="Godina" prefWidth="70"/>
+                                    <TableColumn fx:id="colUpDatum" text="Datum" prefWidth="120"/>
+                                    <TableColumn fx:id="colUpPredmeti" text="Predmeti" prefWidth="360"/>
+                                </columns>
+                            </TableView>
+
+                            <Label text="Obnovljene godine" style="-fx-font-weight: bold;"/>
+                            <TableView fx:id="tblObnove" prefHeight="180">
+                                <columns>
+                                    <TableColumn fx:id="colObSkGod" text="Šk. godina" prefWidth="120"/>
+                                    <TableColumn fx:id="colObGodStud" text="Godina" prefWidth="70"/>
+                                    <TableColumn fx:id="colObDatum" text="Datum" prefWidth="120"/>
+                                    <TableColumn fx:id="colObPredmeti" text="Predmeti" prefWidth="360"/>
+                                </columns>
+                            </TableView>
+                        </VBox>
+                    </center>
+                </BorderPane>
+            </Tab>
+        </tabs>
+    </TabPane>
+</VBox>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.layout.StackPane?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.raflab.studsluzba.ui.MainController">
+
+    <top>
+        <MenuBar>
+            <menus>
+                <Menu text="Studenti">
+                    <items>
+                        <MenuItem text="Pretraga po indeksu" onAction="#openSearchByIndex"/>
+                    </items>
+                </Menu>
+            </menus>
+        </MenuBar>
+    </top>
+
+    <center>
+        <StackPane fx:id="contentHost"/>
+    </center>
+
+</BorderPane>

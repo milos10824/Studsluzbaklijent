@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.raflab.studsluzba.ui.StudentProfileController"
+            style="-fx-padding: 12;">
+
+    <top>
+        <Label fx:id="lblHeader"
+               text="Profil studenta"
+               style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+    </top>
+
+    <center>
+        <TabPane>
+
+            <Tab text="Lični podaci" closable="false">
+                <GridPane hgap="10" vgap="8" style="-fx-padding: 12;">
+
+                    <Label text="Ime i prezime:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <Label fx:id="lblImePrezime" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                    <Label text="Indeks:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                    <Label fx:id="lblIndeks" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                    <Label text="Studijski program:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <Label fx:id="lblProgram" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                    <Label text="ESPB:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                    <Label fx:id="lblEspb" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                    <Label text="Prosek:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                    <Label fx:id="lblProsek" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                </GridPane>
+            </Tab>
+
+            <Tab text="Ispiti" closable="false">
+                <Label text="TODO: položeni i nepoloženi ispiti (sledeća iteracija)"
+                       style="-fx-padding: 12;"/>
+            </Tab>
+
+            <Tab text="Uplate" closable="false">
+                <Label text="TODO: evidencija uplata (sledeća iteracija)"
+                       style="-fx-padding: 12;"/>
+            </Tab>
+
+            <Tab text="Godine" closable="false">
+                <Label text="TODO: upisane i obnovljene godine (sledeća iteracija)"
+                       style="-fx-padding: 12;"/>
+            </Tab>
+
+        </TabPane>
+    </center>
+
+</BorderPane>
