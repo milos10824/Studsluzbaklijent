@@ -13,6 +13,9 @@
 
     <!-- Header -->
     <VBox spacing="4">
+        <Button text="Potvrda o studiranju" onAction="#onPotvrdaStudiranja"/>
+        <Button text="Uverenje o položenim" onAction="#onUverenjePolozeni"/>
+
         <Label fx:id="lblHeader" style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Profil"/>
         <HBox spacing="16">
             <Label text="Indeks:"/>

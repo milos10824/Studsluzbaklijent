@@ -14,6 +14,7 @@ import org.raflab.studsluzba.model.dtos.StudentProfileDTO;
 import org.raflab.studsluzba.navigation.NavigationService;
 import org.raflab.studsluzba.navigation.Route;
 import org.raflab.studsluzba.navigation.StudentTab;
+import org.raflab.studsluzba.service.ReportService;
 import org.raflab.studsluzba.service.StudentApiService;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -23,17 +24,22 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static jdk.jfr.consumer.EventStream.openFile;
+
 @Component
 public class StudentProfileTabsController {
 
     private final StudentApiService api;
     private final NavigationService nav;
+    private final ReportService reportService;
 
 
-    public StudentProfileTabsController(StudentApiService api, NavigationService nav) {
+    public StudentProfileTabsController(StudentApiService api, NavigationService nav, ReportService reportService) {
         this.api = api;
         this.nav = nav;
+        this.reportService = reportService;
     }
+
 
     // Header
     @FXML private Label lblHeader;
@@ -122,6 +128,45 @@ public class StudentProfileTabsController {
     private int polTotalPages = 1;
 
     private final DateTimeFormatter df = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    @FXML
+    public void onPotvrdaStudiranja() {
+        try {
+            var pdf = reportService.generatePotvrdaStudiranja(indeksRes, profile);
+            openFile(pdf);
+        } catch (Exception e) {
+            showError("Ne mogu da generišem potvrdu: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    public void onUverenjePolozeni() {
+        Long indeksId = indeksRes != null ? indeksRes.getId() : null;
+        if (indeksId == null) { showError("Nema indeksId."); return; }
+
+        api.getPolozeni(indeksId, 0, 1000).subscribe(
+                page -> Platform.runLater(() -> {
+                    try {
+                        var pdf = reportService.generateUverenjePolozeni(indeksRes, profile, page.getContent());
+                        openFile(pdf);
+                    } catch (Exception e) {
+                        showError("Ne mogu da generišem uverenje: " + e.getMessage());
+                    }
+                }),
+                err -> Platform.runLater(() -> showError("Ne mogu da učitam položene: " + err.getMessage()))
+        );
+    }
+    private void openFile(java.nio.file.Path path) {
+        try {
+            if (java.awt.Desktop.isDesktopSupported()) {
+                java.awt.Desktop.getDesktop().open(path.toFile());
+            } else {
+                showInfo("PDF je sačuvan na:\n" + path);
+            }
+        } catch (Exception e) {
+            showInfo("PDF je sačuvan na:\n" + path);
+        }
+    }
+
 
     // da ne guramo history dok programatski biramo tab (restore/back/forward)
     private boolean ignoreHistory = false;
