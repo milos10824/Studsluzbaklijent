@@ -1,6 +1,8 @@
 package org.raflab.studsluzba.service;
 
 
+import org.raflab.studsluzba.controllers.request.ObnovaGodineRequest;
+import org.raflab.studsluzba.controllers.request.UpisGodineRequest;
 import org.raflab.studsluzba.controllers.request.UplataRequest;
 import org.raflab.studsluzba.controllers.response.*;
 import org.raflab.studsluzba.model.dtos.StudentDTO;
@@ -148,5 +150,39 @@ public class StudentApiService {
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<StudentDTO>>() {});
     }
+    public Mono<List<SkolskaGodinaResponse>> getSkolskeGodine() {
+        return webClient.get()
+                .uri("/api/skolske-godine")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<SkolskaGodinaResponse>>() {});
+    }
+
+    public Mono<List<DrziPredmetResponse>> getDrziPredmet(Long skolskaGodinaId, String studProgramOznaka) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/drzi-predmet")
+                        .queryParam("skolskaGodinaId", skolskaGodinaId)
+                        .queryParam("studProgramOznaka", studProgramOznaka)
+                        .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<DrziPredmetResponse>>() {});
+    }
+
+    public Mono<UpisGodineResponse> addUpisGodine(UpisGodineRequest req) {
+        return webClient.post()
+                .uri("/api/upis-godine")
+                .bodyValue(req)
+                .retrieve()
+                .bodyToMono(UpisGodineResponse.class);
+    }
+
+    public Mono<ObnovaGodineResponse> addObnovaGodine(ObnovaGodineRequest req) {
+        return webClient.post()
+                .uri("/api/obnova-godine")
+                .bodyValue(req)
+                .retrieve()
+                .bodyToMono(ObnovaGodineResponse.class);
+    }
+
 
 }

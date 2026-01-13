@@ -4,7 +4,10 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import org.raflab.studsluzba.controllers.request.ObnovaGodineRequest;
+import org.raflab.studsluzba.controllers.request.UpisGodineRequest;
 import org.raflab.studsluzba.controllers.response.*;
 import org.raflab.studsluzba.model.SlusaPredmet;
 import org.raflab.studsluzba.model.dtos.StudentProfileDTO;
@@ -101,6 +104,9 @@ public class StudentProfileTabsController {
     @FXML private TableColumn<ObnovaGodineResponse, String> colObGodStud;
     @FXML private TableColumn<ObnovaGodineResponse, String> colObDatum;
     @FXML private TableColumn<ObnovaGodineResponse, String> colObPredmeti;
+    @FXML private Button btnUpisiGodinu;
+    @FXML private Button btnObnoviGodinu;
+
 
     private StudentIndeksResponse indeksRes;
     private StudentProfileDTO profile;
@@ -197,6 +203,387 @@ public class StudentProfileTabsController {
             pushHistory(studentTab);
         });
     }
+    @FXML
+    public void onUpisiGodinu() {
+        if (indeksRes == null) {
+            showError("Nema indeksa – ne mogu da upišem godinu.");
+            return;
+        }
+
+        piTok.setVisible(true);
+        btnUpisiGodinu.setDisable(true);
+        btnObnoviGodinu.setDisable(true);
+
+        api.getSkolskeGodine().subscribe(
+                godine -> Platform.runLater(() -> {
+                    piTok.setVisible(false);
+                    btnUpisiGodinu.setDisable(false);
+                    btnObnoviGodinu.setDisable(false);
+
+                    UpisGodineRequest req = showUpisDialog(godine);
+                    if (req == null) return;
+
+                    piTok.setVisible(true);
+                    btnUpisiGodinu.setDisable(true);
+                    btnObnoviGodinu.setDisable(true);
+
+                    api.addUpisGodine(req)
+                            .then(Mono.fromRunnable(this::loadTokStudija))
+                            .subscribe(
+                                    ok -> {},
+                                    err -> Platform.runLater(() -> {
+                                        piTok.setVisible(false);
+                                        btnUpisiGodinu.setDisable(false);
+                                        btnObnoviGodinu.setDisable(false);
+                                        showError("Greška pri upisu godine: " + err.getMessage());
+                                    })
+                            );
+                }),
+                err -> Platform.runLater(() -> {
+                    piTok.setVisible(false);
+                    btnUpisiGodinu.setDisable(false);
+                    btnObnoviGodinu.setDisable(false);
+                    showError("Ne mogu da učitam školske godine: " + err.getMessage());
+                })
+        );
+    }
+    @FXML
+    public void onObnoviGodinu() {
+        if (indeksRes == null) {
+            showError("Nema indeksa – ne mogu da obnovim godinu.");
+            return;
+        }
+
+        piTok.setVisible(true);
+        btnUpisiGodinu.setDisable(true);
+        btnObnoviGodinu.setDisable(true);
+
+        api.getSkolskeGodine().subscribe(
+                godine -> Platform.runLater(() -> {
+                    piTok.setVisible(false);
+                    btnUpisiGodinu.setDisable(false);
+                    btnObnoviGodinu.setDisable(false);
+
+                    ObnovaGodineRequest req = showObnovaDialog(godine);
+                    if (req == null) return;
+
+                    piTok.setVisible(true);
+                    btnUpisiGodinu.setDisable(true);
+                    btnObnoviGodinu.setDisable(true);
+
+                    api.addObnovaGodine(req)
+                            .then(Mono.fromRunnable(this::loadTokStudija))
+                            .subscribe(
+                                    ok -> {},
+                                    err -> Platform.runLater(() -> {
+                                        piTok.setVisible(false);
+                                        btnUpisiGodinu.setDisable(false);
+                                        btnObnoviGodinu.setDisable(false);
+                                        showError("Greška pri obnovi godine: " + err.getMessage());
+                                    })
+                            );
+                }),
+                err -> Platform.runLater(() -> {
+                    piTok.setVisible(false);
+                    btnUpisiGodinu.setDisable(false);
+                    btnObnoviGodinu.setDisable(false);
+                    showError("Ne mogu da učitam školske godine: " + err.getMessage());
+                })
+        );
+    }
+    private UpisGodineRequest showUpisDialog(List<SkolskaGodinaResponse> godine) {
+        Dialog<UpisGodineRequest> dialog = new Dialog<>();
+        dialog.setTitle("Upis godine");
+
+        ButtonType okType = new ButtonType("Sačuvaj", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(okType, ButtonType.CANCEL);
+
+        ComboBox<SkolskaGodinaResponse> cmbGodina = new ComboBox<>();
+        cmbGodina.getItems().setAll(godine == null ? List.of() : godine);
+        cmbGodina.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(SkolskaGodinaResponse item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "" : item.getOznaka());
+            }
+        });
+        cmbGodina.setButtonCell(new ListCell<>() {
+            @Override protected void updateItem(SkolskaGodinaResponse item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "" : item.getOznaka());
+            }
+        });
+
+        // izaberi aktivnu ako postoji
+        if (godine != null) {
+            godine.stream().filter(SkolskaGodinaResponse::isAktivna).findFirst().ifPresent(cmbGodina::setValue);
+        }
+
+        Spinner<Integer> spGodStud = new Spinner<>(1, 4, 1);
+        spGodStud.setEditable(false);
+
+        TextArea txtNapomena = new TextArea();
+        txtNapomena.setPromptText("Napomena (opciono)");
+        txtNapomena.setPrefRowCount(2);
+
+        ListView<DrziPredmetResponse> lvPredmeti = new ListView<>();
+        lvPredmeti.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        Label lblEspb = new Label("Ukupno ESPB: 0");
+        ProgressIndicator pi = new ProgressIndicator();
+        pi.setVisible(false);
+        pi.setPrefSize(24, 24);
+
+        // layout
+        GridPane gp = new GridPane();
+        gp.setHgap(10);
+        gp.setVgap(10);
+
+        gp.addRow(0, new Label("Školska godina:"), cmbGodina, pi);
+        gp.addRow(1, new Label("Godina studija:"), spGodStud);
+        gp.addRow(2, new Label("Predmeti:"), lvPredmeti);
+        gp.addRow(3, new Label(""), lblEspb);
+        gp.addRow(4, new Label("Napomena:"), txtNapomena);
+
+        dialog.getDialogPane().setContent(gp);
+        lvPredmeti.setPrefHeight(260);
+
+        lvPredmeti.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(DrziPredmetResponse item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(""); return; }
+                String naziv = item.getPredmetNaziv();
+                Integer espb = item.getEspb();
+                String nastavnik = ((item.getNastavnikIme() == null ? "" : item.getNastavnikIme()) + " "
+                        + (item.getNastavnikPrezime() == null ? "" : item.getNastavnikPrezime())).trim();
+                setText(naziv + (espb != null ? (" (" + espb + " ESPB)") : "") + (nastavnik.isBlank() ? "" : (" — " + nastavnik)));
+            }
+        });
+
+        Runnable recompute = () -> {
+            int sum = 0;
+            for (DrziPredmetResponse dp : lvPredmeti.getSelectionModel().getSelectedItems()) {
+                if (dp.getEspb() != null) sum += dp.getEspb();
+            }
+            lblEspb.setText("Ukupno ESPB: " + sum);
+        };
+        lvPredmeti.getSelectionModel().getSelectedItems().addListener((javafx.collections.ListChangeListener<? super DrziPredmetResponse>) c -> recompute.run());
+
+        // kad se promeni šk. godina ili godina studija -> povuci drziPredmet i filtriraj po semestru
+        Runnable reloadPredmeti = () -> {
+            SkolskaGodinaResponse sk = cmbGodina.getValue();
+            if (sk == null || sk.getId() == null) {
+                lvPredmeti.getItems().clear();
+                recompute.run();
+                return;
+            }
+            String program = indeksRes.getStudProgramOznaka();
+            int godinaStud = spGodStud.getValue();
+
+            pi.setVisible(true);
+            api.getDrziPredmet(sk.getId(), program).subscribe(
+                    list -> Platform.runLater(() -> {
+                        pi.setVisible(false);
+                        lvPredmeti.getItems().setAll(filterByGodinaStudija(list, godinaStud));
+                        lvPredmeti.getSelectionModel().clearSelection();
+                        recompute.run();
+                    }),
+                    err -> Platform.runLater(() -> {
+                        pi.setVisible(false);
+                        showError("Ne mogu da učitam predmete: " + err.getMessage());
+                    })
+            );
+        };
+
+        cmbGodina.valueProperty().addListener((obs, o, n) -> reloadPredmeti.run());
+        spGodStud.valueProperty().addListener((obs, o, n) -> reloadPredmeti.run());
+
+        // inicijalno učitaj
+        Platform.runLater(reloadPredmeti);
+
+        dialog.setResultConverter(bt -> {
+            if (bt != okType) return null;
+
+            SkolskaGodinaResponse sk = cmbGodina.getValue();
+            if (sk == null || sk.getId() == null) {
+                showError("Izaberi školsku godinu.");
+                return null;
+            }
+
+            var selected = lvPredmeti.getSelectionModel().getSelectedItems();
+            if (selected == null || selected.isEmpty()) {
+                showError("Izaberi bar jedan predmet.");
+                return null;
+            }
+
+            UpisGodineRequest req = new UpisGodineRequest();
+            req.setStudentIndeksId(indeksRes.getId());
+            req.setSkolskaGodinaId(sk.getId());
+            req.setGodinaStudija(spGodStud.getValue());
+            req.setNapomena(txtNapomena.getText());
+
+            req.setDrziPredmetIds(
+                    selected.stream()
+                            .map(DrziPredmetResponse::getId)
+                            .collect(Collectors.toList())
+            );
+
+            return req;
+        });
+
+        return dialog.showAndWait().orElse(null);
+    }
+    private ObnovaGodineRequest showObnovaDialog(List<SkolskaGodinaResponse> godine) {
+        Dialog<ObnovaGodineRequest> dialog = new Dialog<>();
+        dialog.setTitle("Obnova godine");
+
+        ButtonType okType = new ButtonType("Sačuvaj", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(okType, ButtonType.CANCEL);
+
+        ComboBox<SkolskaGodinaResponse> cmbGodina = new ComboBox<>();
+        cmbGodina.getItems().setAll(godine == null ? List.of() : godine);
+        cmbGodina.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(SkolskaGodinaResponse item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "" : item.getOznaka());
+            }
+        });
+        cmbGodina.setButtonCell(new ListCell<>() {
+            @Override protected void updateItem(SkolskaGodinaResponse item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "" : item.getOznaka());
+            }
+        });
+
+        if (godine != null) {
+            godine.stream().filter(SkolskaGodinaResponse::isAktivna).findFirst().ifPresent(cmbGodina::setValue);
+        }
+
+        Spinner<Integer> spGodStud = new Spinner<>(1, 4, 1);
+
+        TextArea txtNapomena = new TextArea();
+        txtNapomena.setPromptText("Napomena (opciono)");
+        txtNapomena.setPrefRowCount(2);
+
+        ListView<DrziPredmetResponse> lvPredmeti = new ListView<>();
+        lvPredmeti.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        Label lblEspb = new Label("Ukupno ESPB: 0 (max 60)");
+        ProgressIndicator pi = new ProgressIndicator();
+        pi.setVisible(false);
+        pi.setPrefSize(24, 24);
+
+        GridPane gp = new GridPane();
+        gp.setHgap(10);
+        gp.setVgap(10);
+        gp.addRow(0, new Label("Školska godina:"), cmbGodina, pi);
+        gp.addRow(1, new Label("Godina studija:"), spGodStud);
+        gp.addRow(2, new Label("Predmeti:"), lvPredmeti);
+        gp.addRow(3, new Label(""), lblEspb);
+        gp.addRow(4, new Label("Napomena:"), txtNapomena);
+
+        dialog.getDialogPane().setContent(gp);
+        lvPredmeti.setPrefHeight(260);
+
+        lvPredmeti.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(DrziPredmetResponse item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(""); return; }
+                String naziv = item.getPredmetNaziv();
+                Integer espb = item.getEspb();
+                setText(naziv + (espb != null ? (" (" + espb + " ESPB)") : ""));
+            }
+        });
+
+        Runnable recompute = () -> {
+            int sum = 0;
+            for (DrziPredmetResponse dp : lvPredmeti.getSelectionModel().getSelectedItems()) {
+                if (dp.getEspb() != null) sum += dp.getEspb();
+            }
+            lblEspb.setText("Ukupno ESPB: " + sum + " (max 60)");
+        };
+        lvPredmeti.getSelectionModel().getSelectedItems().addListener((javafx.collections.ListChangeListener<? super DrziPredmetResponse>) c -> recompute.run());
+
+        Runnable reloadPredmeti = () -> {
+            SkolskaGodinaResponse sk = cmbGodina.getValue();
+            if (sk == null || sk.getId() == null) {
+                lvPredmeti.getItems().clear();
+                recompute.run();
+                return;
+            }
+            String program = indeksRes.getStudProgramOznaka();
+            int godinaStud = spGodStud.getValue();
+
+            pi.setVisible(true);
+            api.getDrziPredmet(sk.getId(), program).subscribe(
+                    list -> Platform.runLater(() -> {
+                        pi.setVisible(false);
+                        lvPredmeti.getItems().setAll(filterByGodinaStudija(list, godinaStud));
+                        lvPredmeti.getSelectionModel().clearSelection();
+                        recompute.run();
+                    }),
+                    err -> Platform.runLater(() -> {
+                        pi.setVisible(false);
+                        showError("Ne mogu da učitam predmete: " + err.getMessage());
+                    })
+            );
+        };
+
+        cmbGodina.valueProperty().addListener((obs, o, n) -> reloadPredmeti.run());
+        spGodStud.valueProperty().addListener((obs, o, n) -> reloadPredmeti.run());
+        Platform.runLater(reloadPredmeti);
+
+        dialog.setResultConverter(bt -> {
+            if (bt != okType) return null;
+
+            SkolskaGodinaResponse sk = cmbGodina.getValue();
+            if (sk == null || sk.getId() == null) {
+                showError("Izaberi školsku godinu.");
+                return null;
+            }
+
+            var selected = lvPredmeti.getSelectionModel().getSelectedItems();
+            if (selected == null || selected.isEmpty()) {
+                showError("Izaberi bar jedan predmet.");
+                return null;
+            }
+
+            int sum = 0;
+            for (DrziPredmetResponse dp : selected) if (dp.getEspb() != null) sum += dp.getEspb();
+            if (sum > 60) {
+                showError("Za obnovu maksimalno 60 ESPB. Trenutno: " + sum);
+                return null;
+            }
+
+            ObnovaGodineRequest req = new ObnovaGodineRequest();
+            req.setStudentIndeksId(indeksRes.getId());
+            req.setSkolskaGodinaId(sk.getId());
+            req.setGodinaStudija(spGodStud.getValue());
+            req.setNapomena(txtNapomena.getText());
+            req.setDrziPredmetIds(
+                    selected.stream()
+                            .map(DrziPredmetResponse::getId)
+                            .collect(Collectors.toList())
+            );
+
+            return req;
+        });
+
+        return dialog.showAndWait().orElse(null);
+    }
+    private static List<DrziPredmetResponse> filterByGodinaStudija(List<DrziPredmetResponse> list, int godinaStudija) {
+        if (list == null) return List.of();
+        int minSem = (godinaStudija - 1) * 2 + 1;
+        int maxSem = godinaStudija * 2;
+
+
+        return list.stream()
+                .filter(dp -> dp.getSemestar() != null
+                        && dp.getSemestar() >= minSem
+                        && dp.getSemestar() <= maxSem)
+                .collect(Collectors.toList());
+
+    }
+
 
     private void ensureSelectedTabLoaded() {
         TabPane pane = tabLicni != null ? tabLicni.getTabPane() : null;
