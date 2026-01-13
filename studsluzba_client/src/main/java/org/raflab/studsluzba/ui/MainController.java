@@ -66,6 +66,29 @@ public class MainController {
             e.printStackTrace();
         }
     }
+    @FXML
+    public void openSearchByName() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/SearchStudentByName.fxml"));
+            loader.setControllerFactory(ctx::getBean);
+            Parent view = loader.load();
+            contentHost.getChildren().setAll(view);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    public void openSearchBySchool() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/SearchStudentBySchool.fxml"));
+            loader.setControllerFactory(ctx::getBean);
+            Parent view = loader.load();
+            contentHost.getChildren().setAll(view);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     private void showView(Parent view) {
         contentHost.getChildren().setAll(view);

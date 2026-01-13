@@ -17,6 +17,8 @@
                 <Menu text="Studenti">
                     <items>
                         <MenuItem text="Pretraga po indeksu" onAction="#openSearchByIndex"/>
+                        <MenuItem text="Pretraga po imenu/prezimenu" onAction="#openSearchByName"/>
+                        <MenuItem text="Pretraga po srednjoj školi" onAction="#openSearchBySchool"/>
                     </items>
                 </Menu>
             </menus>

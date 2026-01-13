@@ -1,12 +1,8 @@
 package org.raflab.studsluzba.service;
 
 
-import org.raflab.studsluzba.controllers.response.StudentIndeksResponse;
-import org.raflab.studsluzba.controllers.response.StudentPodaciResponse;
-import org.raflab.studsluzba.controllers.response.PolozenPredmetResponse;
-import org.raflab.studsluzba.controllers.response.UplataResponse;
-import org.raflab.studsluzba.controllers.response.UpisGodineResponse;
-import org.raflab.studsluzba.controllers.response.ObnovaGodineResponse;
+import org.raflab.studsluzba.controllers.response.*;
+import org.raflab.studsluzba.model.dtos.StudentDTO;
 import org.raflab.studsluzba.model.dtos.StudentProfileDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -91,4 +87,54 @@ public class StudentApiService {
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<ObnovaGodineResponse>>() {});
     }
+
+
+    public Mono<StudentIndeksResponse> getStudentIndeks(Long indeksId) {
+        return webClient.get()
+                .uri("/api/student/indeks/{id}", indeksId)
+                .retrieve()
+                .bodyToMono(StudentIndeksResponse.class);
+    }
+
+    public Mono<PageResponse<StudentDTO>> searchStudents(
+            String ime,
+            String prezime,
+            String studProgram,
+            Integer godina,
+            Integer broj,
+            int page,
+            int size
+    ) {
+        return webClient.get()
+                .uri(uriBuilder -> {
+                    var b = uriBuilder.path("/api/student/search")
+                            .queryParam("page", page)
+                            .queryParam("size", size);
+
+                    if (ime != null && !ime.trim().isBlank()) b = b.queryParam("ime", ime.trim());
+                    if (prezime != null && !prezime.trim().isBlank()) b = b.queryParam("prezime", prezime.trim());
+                    if (studProgram != null && !studProgram.trim().isBlank()) b = b.queryParam("studProgram", studProgram.trim());
+                    if (godina != null) b = b.queryParam("godina", godina);
+                    if (broj != null) b = b.queryParam("broj", broj);
+
+                    return b.build();
+                })
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<PageResponse<StudentDTO>>() {});
+    }
+
+    public Mono<List<SrednjaSkolaResponse>> getSrednjeSkole() {
+        return webClient.get()
+                .uri("/srednje-skole")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<SrednjaSkolaResponse>>() {});
+    }
+
+    public Mono<List<StudentDTO>> getStudentiPoSrednjojSkoli(Long srednjaSkolaId) {
+        return webClient.get()
+                .uri("/api/student/srednja-skola/{id}", srednjaSkolaId)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<StudentDTO>>() {});
+    }
+
 }
