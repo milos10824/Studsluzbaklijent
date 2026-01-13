@@ -143,13 +143,21 @@
             <Tab fx:id="tabUplate" text="Uplate" closable="false">
                 <BorderPane>
                     <top>
-                        <HBox alignment="CENTER" spacing="10">
+                        <HBox alignment="CENTER_LEFT" spacing="10">
                             <padding>
                                 <Insets top="10" right="10" bottom="10" left="10"/>
                             </padding>
+
                             <ProgressIndicator fx:id="piUplate" visible="false"/>
+
+                            <Region HBox.hgrow="ALWAYS"/>
+
+                            <Button fx:id="btnNovaUplata"
+                                    text="Nova uplata"
+                                    onAction="#onNovaUplata"/>
                         </HBox>
                     </top>
+
 
                     <center>
                         <TableView fx:id="tblUplate" prefHeight="400">

@@ -26,6 +26,7 @@ public class StudentProfileTabsController {
     private final StudentApiService api;
     private final NavigationService nav;
 
+
     public StudentProfileTabsController(StudentApiService api, NavigationService nav) {
         this.api = api;
         this.nav = nav;
@@ -44,6 +45,8 @@ public class StudentProfileTabsController {
     @FXML private Tab tabPolozeni;
     @FXML private Tab tabUplate;
     @FXML private Tab tabTok;
+
+
 
     // Lični podaci
     @FXML private ProgressIndicator piLicni;
@@ -82,6 +85,7 @@ public class StudentProfileTabsController {
     @FXML private TableColumn<UplataResponse, String> colUplDatum;
     @FXML private TableColumn<UplataResponse, String> colUplIznos;
     @FXML private TableColumn<UplataResponse, String> colUplKurs;
+    @FXML private Button btnNovaUplata;
 
     // Tok studija
     @FXML private ProgressIndicator piTok;
@@ -115,6 +119,50 @@ public class StudentProfileTabsController {
 
     // da ne guramo history dok programatski biramo tab (restore/back/forward)
     private boolean ignoreHistory = false;
+    @FXML
+    public void onNovaUplata() {
+        Long indeksId = indeksRes != null ? indeksRes.getId() : null;
+        if (indeksId == null) {
+            showError("Ne mogu da unesem uplatu: indeksId nedostaje.");
+            return;
+        }
+
+        TextInputDialog d = new TextInputDialog();
+        d.setTitle("Nova uplata");
+        d.setHeaderText("Unesite iznos uplate u RSD");
+        d.setContentText("Iznos (RSD):");
+
+        var opt = d.showAndWait();
+        if (opt.isEmpty()) return;
+
+        Double iznos = parseRsd(opt.get());
+        if (iznos == null || iznos <= 0) {
+            showError("Iznos mora biti pozitivan broj (npr. 15000 ili 15000,50).");
+            return;
+        }
+
+        piUplate.setVisible(true);
+        tblUplate.setDisable(true);
+        btnNovaUplata.setDisable(true);
+
+        api.addUplata(indeksId, iznos)
+                .then(api.getUplate(indeksId)) // odmah posle unosa povuci sve uplate ponovo
+                .subscribe(
+                        list -> Platform.runLater(() -> {
+                            tblUplate.getItems().setAll(list == null ? List.of() : list);
+                            piUplate.setVisible(false);
+                            tblUplate.setDisable(false);
+                            btnNovaUplata.setDisable(false);
+                            showInfo("Uplata je uspešno sačuvana.");
+                        }),
+                        err -> Platform.runLater(() -> {
+                            piUplate.setVisible(false);
+                            tblUplate.setDisable(false);
+                            btnNovaUplata.setDisable(false);
+                            showError("Greška pri unosu uplate: " + err.getMessage());
+                        })
+                );
+    }
 
     @FXML
     public void initialize() {
@@ -500,6 +548,32 @@ public class StudentProfileTabsController {
 
     private static String safe(String s) {
         return s == null ? "" : s;
+    }
+    private static Double parseRsd(String s) {
+        if (s == null) return null;
+        String t = s.trim().replace(" ", "");
+        if (t.isBlank()) return null;
+
+        // Podrži formate: "15000", "15000,50", "15.000,50"
+        if (t.contains(",") && t.contains(".")) {
+            // pretpostavi "." hiljade, "," decimale
+            t = t.replace(".", "").replace(",", ".");
+        } else if (t.contains(",")) {
+            t = t.replace(",", ".");
+        }
+        try {
+            return Double.parseDouble(t);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void showInfo(String msg) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION);
+        a.setTitle("Info");
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
     }
 
     private static String joinList(List<String> xs) {

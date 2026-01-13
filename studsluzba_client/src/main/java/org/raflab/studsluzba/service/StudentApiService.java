@@ -1,6 +1,7 @@
 package org.raflab.studsluzba.service;
 
 
+import org.raflab.studsluzba.controllers.request.UplataRequest;
 import org.raflab.studsluzba.controllers.response.*;
 import org.raflab.studsluzba.model.dtos.StudentDTO;
 import org.raflab.studsluzba.model.dtos.StudentProfileDTO;
@@ -121,6 +122,17 @@ public class StudentApiService {
                 })
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<PageResponse<StudentDTO>>() {});
+    }
+    public Mono<UplataResponse> addUplata(Long indeksId, double iznosRsd) {
+        UplataRequest req = new UplataRequest();
+        req.setIndeksId(indeksId);
+        req.setIznosRsd(iznosRsd);
+
+        return webClient.post()
+                .uri("/api/uplata/{indeksId}", indeksId)
+                .bodyValue(req)
+                .retrieve()
+                .bodyToMono(UplataResponse.class);
     }
 
     public Mono<List<SrednjaSkolaResponse>> getSrednjeSkole() {
