@@ -12,7 +12,8 @@ import org.springframework.context.ConfigurableApplicationContext;
         scanBasePackages = {
                 "org.raflab.studsluzba.ui",
                 "org.raflab.studsluzba.service",
-                "org.raflab.studsluzba.config"
+                "org.raflab.studsluzba.config",
+                "org.raflab.studsluzba.navigation"
         },
         exclude = {
                 DataSourceAutoConfiguration.class,

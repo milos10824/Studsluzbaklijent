@@ -8,7 +8,9 @@ import javafx.scene.layout.VBox;
 import org.raflab.studsluzba.controllers.response.*;
 import org.raflab.studsluzba.model.SlusaPredmet;
 import org.raflab.studsluzba.model.dtos.StudentProfileDTO;
-import org.raflab.studsluzba.service.PageResponse;
+import org.raflab.studsluzba.navigation.NavigationService;
+import org.raflab.studsluzba.navigation.Route;
+import org.raflab.studsluzba.navigation.StudentTab;
 import org.raflab.studsluzba.service.StudentApiService;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -18,22 +20,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * Profil studenta organizovan u tabove:
- * - Osnovno (sa sumarnim podacima)
- * - Lični podaci
- * - Nepoloženi (predmeti koje sluša / nepoloženi)
- * - Položeni
- * - Uplate
- * - Tok studija (upisi i obnove)
- */
 @Component
 public class StudentProfileTabsController {
 
     private final StudentApiService api;
+    private final NavigationService nav;
 
-    public StudentProfileTabsController(StudentApiService api) {
+    public StudentProfileTabsController(StudentApiService api, NavigationService nav) {
         this.api = api;
+        this.nav = nav;
     }
 
     // Header
@@ -90,6 +85,7 @@ public class StudentProfileTabsController {
 
     // Tok studija
     @FXML private ProgressIndicator piTok;
+
     @FXML private TableView<UpisGodineResponse> tblUpisi;
     @FXML private TableColumn<UpisGodineResponse, String> colUpSkGod;
     @FXML private TableColumn<UpisGodineResponse, String> colUpGodStud;
@@ -105,17 +101,20 @@ public class StudentProfileTabsController {
     private StudentIndeksResponse indeksRes;
     private StudentProfileDTO profile;
 
-    private boolean licniLoaded = false;
-    private boolean nepolozeniLoaded = false;
-    private boolean polozeniLoaded = false;
-    private boolean uplateLoaded = false;
-    private boolean tokLoaded = false;
+    private boolean licniLoaded;
+    private boolean nepolozeniLoaded;
+    private boolean polozeniLoaded;
+    private boolean uplateLoaded;
+    private boolean tokLoaded;
 
     private int polPage = 0;
-    private int polSize = 50; // dovoljno veliko za većinu slučajeva
+    private final int polSize = 50;
     private int polTotalPages = 1;
 
     private final DateTimeFormatter df = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+    // da ne guramo history dok programatski biramo tab (restore/back/forward)
+    private boolean ignoreHistory = false;
 
     @FXML
     public void initialize() {
@@ -124,43 +123,62 @@ public class StudentProfileTabsController {
         setupUplateTable();
         setupTokTables();
 
-        tabLicni.setOnSelectionChanged(e -> {
-            if (tabLicni.isSelected() && !licniLoaded) loadLicniPodaci();
+        // 1) jedinstvena logika: kad se promeni selektovan tab -> load (ako treba) + history entry
+        hookTab(tabLicni, StudentTab.LICNI);
+        hookTab(tabNepolozeni, StudentTab.NEPOLOZENI);
+        hookTab(tabPolozeni, StudentTab.POLOZENI);
+        hookTab(tabUplate, StudentTab.UPLATE);
+        hookTab(tabTok, StudentTab.TOK);
+
+        // 2) osiguraj da se inicijalni selektovani tab učita i kad JavaFX ne okine event
+        Platform.runLater(this::ensureSelectedTabLoaded);
+    }
+
+    private void hookTab(Tab tab, StudentTab studentTab) {
+        tab.setOnSelectionChanged(e -> {
+            if (!tab.isSelected()) return;
+
+            // load sadržaja (ne zavisi od history)
+            if (tab == tabLicni && !licniLoaded) loadLicniPodaci();
+            else if (tab == tabNepolozeni && !nepolozeniLoaded) loadNepolozeni();
+            else if (tab == tabPolozeni && !polozeniLoaded) loadPolozeni(0);
+            else if (tab == tabUplate && !uplateLoaded) loadUplate();
+            else if (tab == tabTok && !tokLoaded) loadTokStudija();
+
+            // history (mora i za tabove)
+            pushHistory(studentTab);
         });
-        tabNepolozeni.setOnSelectionChanged(e -> {
-            if (tabNepolozeni.isSelected() && !nepolozeniLoaded) loadNepolozeni();
-        });
-        tabPolozeni.setOnSelectionChanged(e -> {
-            if (tabPolozeni.isSelected() && !polozeniLoaded) loadPolozeni(0);
-        });
-        tabUplate.setOnSelectionChanged(e -> {
-            if (tabUplate.isSelected() && !uplateLoaded) loadUplate();
-        });
-        tabTok.setOnSelectionChanged(e -> {
-            if (tabTok.isSelected() && !tokLoaded) loadTokStudija();
-        });
+    }
+
+    private void ensureSelectedTabLoaded() {
+        TabPane pane = tabLicni != null ? tabLicni.getTabPane() : null;
+        if (pane == null) return;
+
+        Tab selected = pane.getSelectionModel().getSelectedItem();
+        if (selected == tabLicni && !licniLoaded) loadLicniPodaci();
+        else if (selected == tabNepolozeni && !nepolozeniLoaded) loadNepolozeni();
+        else if (selected == tabPolozeni && !polozeniLoaded) loadPolozeni(0);
+        else if (selected == tabUplate && !uplateLoaded) loadUplate();
+        else if (selected == tabTok && !tokLoaded) loadTokStudija();
     }
 
     public void setData(StudentIndeksResponse indeksRes, StudentProfileDTO profile) {
         this.indeksRes = indeksRes;
         this.profile = profile;
 
-        // Ime/Prezime: prvo iz fastsearch response (imeStudenta/prezimeStudenta),
-        // a fallback iz profila ako treba
-        String ime = null;
-        String prezime = null;
+        // reset tab-state ako se ista instanca kontrolera nekad ponovo koristi
+        licniLoaded = false;
+        nepolozeniLoaded = false;
+        polozeniLoaded = false;
+        uplateLoaded = false;
+        tokLoaded = false;
 
-        if (indeksRes != null) {
-            try {
-                // nova polja sa servera
-                ime = indeksRes.getImeStudenta();
-                prezime = indeksRes.getPrezimeStudenta();
-            } catch (Exception ignore) {
-                // ako si još na starom jar-u, ignoriši (ali posle clean install neće trebati)
-            }
-        }
+        // ===== header =====
+        String ime = indeksRes != null ? indeksRes.getImeStudenta() : null;
+        String prezime = indeksRes != null ? indeksRes.getPrezimeStudenta() : null;
 
-        if ((ime == null || prezime == null) && profile != null && profile.getIndeks() != null
+        if ((ime == null || prezime == null) && profile != null
+                && profile.getIndeks() != null
                 && profile.getIndeks().getStudent() != null) {
             if (ime == null) ime = profile.getIndeks().getStudent().getIme();
             if (prezime == null) prezime = profile.getIndeks().getStudent().getPrezime();
@@ -168,30 +186,69 @@ public class StudentProfileTabsController {
 
         String imePrezime = ((ime == null ? "" : ime) + " " + (prezime == null ? "" : prezime)).trim();
         if (imePrezime.isBlank()) imePrezime = "(nepoznato)";
-
         lblHeader.setText("Profil: " + imePrezime);
 
-        // indeks prikaz: RN 24/1
+        String programOznaka = indeksRes != null ? safe(indeksRes.getStudProgramOznaka()) : "";
+        String programNaziv = indeksRes != null ? safe(indeksRes.getStudijskiProgramNaziv()) : "";
+        lblProgram.setText(!programNaziv.isBlank() ? programNaziv : programOznaka);
+
         int godina = indeksRes != null ? indeksRes.getGodina() : 0;
         int yy = godina > 0 ? (godina % 100) : 0;
-        String program = indeksRes != null ? safe(indeksRes.getStudProgramOznaka()) : "";
         Integer broj = indeksRes != null ? indeksRes.getBroj() : null;
-        String indeksStr = program + " " + yy + "/" + (broj == null ? "" : broj);
-        lblIndeks.setText(indeksStr.trim());
-
-        // Program (možeš i studijskiProgramNaziv ako želiš)
-        lblProgram.setText(indeksRes != null ? safe(indeksRes.getStudProgramOznaka()) : "");
+        lblIndeks.setText((programOznaka + " " + String.format("%02d", yy) + "/" + (broj == null ? "" : broj)).trim());
 
         Integer espb = indeksRes != null ? indeksRes.getOstvarenoEspb() : null;
         lblEspb.setText(String.valueOf(espb == null ? 0 : espb));
 
         lblProsek.setText("—");
 
-        Platform.runLater(() -> {
-            if (!licniLoaded) tabLicni.getTabPane().getSelectionModel().select(tabLicni);
-        });
+        // ako je već neki tab selektovan (npr. back/forward) - učitaj ga
+        Platform.runLater(this::ensureSelectedTabLoaded);
     }
 
+    public void selectTab(StudentTab tab) {
+        if (tab == null) tab = StudentTab.LICNI;
+
+        ignoreHistory = true;
+        try {
+            TabPane pane = tabLicni.getTabPane();
+            if (pane == null) return;
+
+            switch (tab) {
+                case LICNI:
+                    pane.getSelectionModel().select(tabLicni);
+                    break;
+                case NEPOLOZENI:
+                    pane.getSelectionModel().select(tabNepolozeni);
+                    break;
+                case POLOZENI:
+                    pane.getSelectionModel().select(tabPolozeni);
+                    break;
+                case UPLATE:
+                    pane.getSelectionModel().select(tabUplate);
+                    break;
+                case TOK:
+                    pane.getSelectionModel().select(tabTok);
+                    break;
+                default:
+                    pane.getSelectionModel().select(tabLicni);
+                    break;
+            }
+        } finally {
+            ignoreHistory = false;
+        }
+
+        // za slučaj da JavaFX ne okine selection event (ako je već bio selektovan isti tab)
+        Platform.runLater(this::ensureSelectedTabLoaded);
+    }
+
+    private void pushHistory(StudentTab tab) {
+        if (indeksRes == null || profile == null) return;
+        if (ignoreHistory) return;
+
+
+        nav.navigate(Route.studentProfile(indeksRes, profile, tab));
+    }
 
     private void setupNepolozeniTable() {
         colNepPredmet.setCellValueFactory(c -> new SimpleStringProperty(
@@ -253,15 +310,17 @@ public class StudentProfileTabsController {
         piLicni.setVisible(true);
         boxLicni.setDisable(true);
 
-        Long studentId = indeksRes != null ? indeksRes.getId(): null;
-        if (studentId == null) {
-            showError("Ne mogu da učitam lične podatke: studentId nedostaje.");
+        // BITNO: endpoint /api/student/podaci/{id} očekuje StudentPodaci ID
+        Long studentPodaciId = (indeksRes != null) ? indeksRes.getStudentId() : null;
+
+        if (studentPodaciId == null) {
+            showError("Ne mogu da učitam lične podatke: studentPodaciId nedostaje.");
             piLicni.setVisible(false);
             boxLicni.setDisable(false);
             return;
         }
 
-        api.getStudentPodaci(studentId)
+        api.getStudentPodaci(studentPodaciId)
                 .subscribe(
                         data -> Platform.runLater(() -> {
                             fillLicni(data);
@@ -333,8 +392,6 @@ public class StudentProfileTabsController {
                             piPolozeni.setVisible(false);
                             tblPolozeni.setDisable(false);
 
-                            // Izračunaj prosek (na osnovu učitanog sadržaja). Ako ima više strana,
-                            // prosek će biti približan. U praksi je često dovoljno, jer je polSize velik.
                             computeAndShowProsek(resp.getContent());
                         }),
                         err -> Platform.runLater(() -> {
@@ -351,22 +408,22 @@ public class StudentProfileTabsController {
             return;
         }
 
-        // ponderisan ESPB-om (ako fali ESPB, tretiramo kao 0)
         double sumW = 0;
         double sum = 0;
         for (PolozenPredmetResponse p : polozeni) {
             if (p.getOcena() == null) continue;
             int espb = p.getEspb() == null ? 0 : p.getEspb();
-            if (espb <= 0) espb = 1; // fallback
+            if (espb <= 0) espb = 1;
             sumW += espb;
             sum += p.getOcena() * espb;
         }
+
         if (sumW <= 0) {
             lblProsek.setText("—");
             return;
         }
-        double avg = sum / sumW;
-        lblProsek.setText(String.format("%.2f", avg));
+
+        lblProsek.setText(String.format("%.2f", (sum / sumW)));
     }
 
     private void loadUplate() {
@@ -418,10 +475,8 @@ public class StudentProfileTabsController {
         Mono.zip(upisiM, obnoveM)
                 .subscribe(
                         tup -> Platform.runLater(() -> {
-                            List<UpisGodineResponse> upisi = tup.getT1();
-                            List<ObnovaGodineResponse> obnove = tup.getT2();
-                            tblUpisi.getItems().setAll(upisi == null ? List.of() : upisi);
-                            tblObnove.getItems().setAll(obnove == null ? List.of() : obnove);
+                            tblUpisi.getItems().setAll(tup.getT1() == null ? List.of() : tup.getT1());
+                            tblObnove.getItems().setAll(tup.getT2() == null ? List.of() : tup.getT2());
                             piTok.setVisible(false);
                             tblUpisi.setDisable(false);
                             tblObnove.setDisable(false);
