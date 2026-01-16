@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static jdk.jfr.consumer.EventStream.openFile;
-
 @Component
 public class StudentProfileTabsController {
 

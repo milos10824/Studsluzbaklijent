@@ -62,6 +62,26 @@ public class MainController {
                 return;
             }
 
+            if (route.getType() == RouteType.EXAM_PERIODS) {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/ExamPeriods.fxml"));
+                loader.setControllerFactory(ctx::getBean);
+                Parent view = loader.load();
+                showView(view);
+                return;
+            }
+
+            if (route.getType() == RouteType.EXAMS_BY_PERIOD) {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/ExamsByPeriod.fxml"));
+                loader.setControllerFactory(ctx::getBean);
+                Parent view = loader.load();
+
+                ExamsByPeriodController ctrl = loader.getController();
+                ctrl.setRok(route.getIspitniRok());
+
+                showView(view);
+                return;
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -88,6 +108,11 @@ public class MainController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    public void openExamPeriods() {
+        nav.navigate(Route.examPeriods());
     }
 
     private void showView(Parent view) {

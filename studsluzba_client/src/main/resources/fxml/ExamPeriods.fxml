@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.raflab.studsluzba.ui.ExamPeriodsController">
+
+    <top>
+        <HBox spacing="10" style="-fx-padding: 10;">
+            <Button text="Novi rok" onAction="#openCreateDialog"/>
+            <Button text="Osveži" onAction="#refresh"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <ProgressIndicator fx:id="loader" visible="false" managed="false" prefWidth="22" prefHeight="22"/>
+        </HBox>
+    </top>
+
+    <center>
+        <TableView fx:id="table">
+            <columns>
+                <TableColumn fx:id="colNaziv" text="Naziv" prefWidth="300"/>
+                <TableColumn fx:id="colOd" text="Datum od" prefWidth="150"/>
+                <TableColumn fx:id="colDo" text="Datum do" prefWidth="150"/>
+            </columns>
+        </TableView>
+    </center>
+
+</BorderPane>
