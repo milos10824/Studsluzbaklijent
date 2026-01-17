@@ -21,6 +21,19 @@
                         <MenuItem text="Pretraga po srednjoj školi" onAction="#openSearchBySchool"/>
                     </items>
                 </Menu>
+
+                <Menu text="Ispiti">
+                    <items>
+                        <MenuItem text="Ispitni rokovi" onAction="#openExamPeriods"/>
+                    </items>
+                </Menu>
+
+                <Menu text="Programi">
+                    <items>
+                        <MenuItem text="Studijski programi" onAction="#openStudyPrograms"/>
+                    </items>
+                </Menu>
+
             </menus>
         </MenuBar>
     </top>

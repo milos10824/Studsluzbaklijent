@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.raflab.studsluzba.ui.ExamsByPeriodController">
+
+    <top>
+        <VBox spacing="8" style="-fx-padding: 10;">
+            <HBox spacing="10">
+                <Button text="← Rokovi" onAction="#backToPeriods"/>
+                <Label fx:id="lblRok" text="Rok"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <ProgressIndicator fx:id="loader" visible="false" managed="false" prefWidth="22" prefHeight="22"/>
+            </HBox>
+
+            <HBox spacing="10">
+                <Button text="Novi ispit" onAction="#openCreateDialog"/>
+                <Button text="Osveži" onAction="#refresh"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <TableView fx:id="table">
+            <columns>
+                <TableColumn fx:id="colPredmet" text="Predmet" prefWidth="280"/>
+                <TableColumn fx:id="colDatum" text="Datum" prefWidth="140"/>
+                <TableColumn fx:id="colVreme" text="Vreme" prefWidth="120"/>
+                <TableColumn fx:id="colNastavnik" text="Nastavnik" prefWidth="260"/>
+            </columns>
+        </TableView>
+    </center>
+
+</BorderPane>

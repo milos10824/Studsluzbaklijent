@@ -10,6 +10,7 @@ import org.raflab.studsluzba.navigation.RouteType;
 import org.raflab.studsluzba.navigation.StudentTab;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.raflab.studsluzba.ui.ProgramDetailsController;
 
 @Component
 public class MainController {
@@ -62,6 +63,46 @@ public class MainController {
                 return;
             }
 
+            if (route.getType() == RouteType.EXAM_PERIODS) {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/ExamPeriods.fxml"));
+                loader.setControllerFactory(ctx::getBean);
+                Parent view = loader.load();
+                showView(view);
+                return;
+            }
+
+            if (route.getType() == RouteType.EXAMS_BY_PERIOD) {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/ExamsByPeriod.fxml"));
+                loader.setControllerFactory(ctx::getBean);
+                Parent view = loader.load();
+
+                ExamsByPeriodController ctrl = loader.getController();
+                ctrl.setRok(route.getIspitniRok());
+
+                showView(view);
+                return;
+            }
+
+            if (route.getType() == RouteType.STUDY_PROGRAMS) {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/StudyPrograms.fxml"));
+                loader.setControllerFactory(ctx::getBean);
+                Parent view = loader.load();
+                showView(view);
+                return;
+            }
+
+            if (route.getType() == RouteType.PROGRAM_DETAILS) {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/ProgramDetails.fxml"));
+                loader.setControllerFactory(ctx::getBean);
+                Parent view = loader.load();
+
+                ProgramDetailsController ctrl = loader.getController();
+                ctrl.setProgram(route.getProgram());  // payload
+
+                showView(view);
+                return;
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -88,6 +129,17 @@ public class MainController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    public void openStudyPrograms() {
+        nav.navigate(Route.studyPrograms());
+    }
+
+
+    @FXML
+    public void openExamPeriods() {
+        nav.navigate(Route.examPeriods());
     }
 
     private void showView(Parent view) {

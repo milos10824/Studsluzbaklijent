@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.raflab.studsluzba.ui.ProgramDetailsController">
+
+    <top>
+        <VBox spacing="8" style="-fx-padding:10;">
+            <HBox spacing="10">
+                <Button text="← Programi" onAction="#back"/>
+                <Label fx:id="lblProgram" text="Program"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <ProgressIndicator fx:id="loader" visible="false" managed="false" prefWidth="22" prefHeight="22"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <TabPane>
+            <tabs>
+
+                <Tab text="Predmeti" closable="false">
+                    <VBox spacing="10" style="-fx-padding:10;">
+                        <HBox spacing="10">
+                            <Button text="Dodaj predmet" onAction="#dodajPredmetNaProgram"/>
+                            <Button text="Osveži" onAction="#refreshPredmeti"/>
+                        </HBox>
+
+                        <TableView fx:id="tblPredmeti">
+                            <columns>
+                                <TableColumn fx:id="colPredmetNaziv" text="Predmet" prefWidth="600"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+
+                <Tab text="Prosečna ocena" closable="false">
+                    <VBox spacing="10" style="-fx-padding:10;">
+                        <HBox spacing="10">
+                            <Label text="Predmet:"/>
+                            <ComboBox fx:id="cbPredmetZaProsek" prefWidth="260"/>
+                            <Label text="Godina od:"/>
+                            <TextField fx:id="tfGodOd" prefWidth="80"/>
+                            <Label text="Godina do:"/>
+                            <TextField fx:id="tfGodDo" prefWidth="80"/>
+                            <Button text="Učitaj" onAction="#ucitajProsek"/>
+                            <Button text="Štampaj" onAction="#stampajProsek"/>
+                        </HBox>
+
+                        <TableView fx:id="tblProsek">
+                            <columns>
+                                <TableColumn fx:id="colGodina" text="Godina" prefWidth="120"/>
+                                <TableColumn fx:id="colProsek" text="Prosek" prefWidth="120"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+
+            </tabs>
+        </TabPane>
+    </center>
+
+</BorderPane>
