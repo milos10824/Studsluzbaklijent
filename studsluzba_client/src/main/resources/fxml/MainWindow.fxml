@@ -28,6 +28,12 @@
                     </items>
                 </Menu>
 
+                <Menu text="Programi">
+                    <items>
+                        <MenuItem text="Studijski programi" onAction="#openStudyPrograms"/>
+                    </items>
+                </Menu>
+
             </menus>
         </MenuBar>
     </top>
